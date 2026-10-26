@@ -3,7 +3,7 @@ name: code-scanning-agent
 description: Runs linters, formatters, type checkers and static analysis on the exact commit and reports quality findings against thresholds. Tools and commands are generated during repo setup.
 stage: "6 (Code Scanning Agent)"
 generation: hybrid
-status: partial
+status: ready
 upstream: security-scanning-agent
 downstream: documentation-agent
 ---
@@ -54,15 +54,38 @@ Assess code quality objectively: style, correctness hints, type safety, complexi
 ## Project-specific sections
 
 <!-- BEGIN GENERATED:static-analysis-tools -->
-> ⚠️ **PENDING GENERATION.** Linters, type checkers, static analysers and complexity tools for this stack.
+| Tool | Role | Config |
+|---|---|---|
+| ruff 0.17.2 (`check`) | lint + isort + flake8-bandit subset (E, F, I, W, UP, B, SIM) | `pyproject.toml` `[tool.ruff]` |
+| ruff (`format --check`) | formatter verification | `pyproject.toml` |
+| Manual diff review | complexity, duplication, dead code (no dedicated tool configured) | this file's procedure |
+
+No separate type checker is configured; pydantic + function annotations are the typing
+baseline. Do not add tools without a planned change.
 <!-- END GENERATED:static-analysis-tools -->
 
 <!-- BEGIN GENERATED:lint-format-commands -->
-> ⚠️ **PENDING GENERATION.** Verified check-only commands, plus the auto-fix variants for reference.
+Verified, run from repository root:
+
+| Check | Command |
+|---|---|
+| Lint (check-only) | `.venv/bin/python -m ruff check app tests` |
+| Lint JSON output | `.venv/bin/python -m ruff check --output-format json -o <out>/ruff.json app tests` |
+| Format check | `.venv/bin/python -m ruff format --check app tests` |
+| Format auto-fix (reference only) | `.venv/bin/python -m ruff format app tests` |
+| Lint auto-fix (reference only) | `.venv/bin/python -m ruff check --fix app tests` |
+| Version | `.venv/bin/python -m ruff --version` |
 <!-- END GENERATED:lint-format-commands -->
 
 <!-- BEGIN GENERATED:quality-thresholds -->
-> ⚠️ **PENDING GENERATION.** Blocking rules for errors, complexity and duplication.
+- Blocking: **any** new ruff lint error or format-check failure in the branch diff.
+- Per-file-ignored rule: B008 in `app/routers/*.py`, `app/main.py`, `tests/*` (FastAPI
+  `Depends`/`Query` defaults are idiomatic) — configured in `pyproject.toml`, not by
+  inline ignores.
+- Complexity/duplication: no numeric tool thresholds configured; flag functions that
+  are hard to follow, duplicate logic across routers, or dead/commented-out code in the
+  manual review step.
+- Baseline is clean: `ruff check` and `ruff format --check` pass with zero findings.
 <!-- END GENERATED:quality-thresholds -->
 
 ## Done when
