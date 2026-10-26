@@ -1,0 +1,50 @@
+# Non-secret pipeline configuration. Never put credentials here.
+# Review during agent bootstrap (AGENTS.md section 7.1).
+
+max_correction_cycles: 3        # correction loop (6B) retry budget per ticket
+
+ticketing:
+  provider: jira                # jira | github-issues | linear | azure-devops | gitlab-issues | other
+  intake_mode: webhook          # webhook | polling
+  polling_interval_seconds: 120 # used when intake_mode is polling
+  accepted_projects: []         # provider project/board/repo keys to watch, e.g. ["PROJ"]
+  accepted_types: [epic, story, task, subtask, bug]
+  type_map:                     # canonical -> provider's own type names
+    epic: "Epic"
+    story: "Story"
+    task: "Task"
+    subtask: "Sub-task"
+    bug: "Bug"
+  status_map:                   # canonical -> provider's own status names
+    in_progress: "In Progress"
+    done: "Done"
+    blocked: "Blocked"
+  labels:                       # canonical -> provider label/tag names
+    agent_managed: "agent-managed"
+    needs_info: "needs-info"
+    blocked: "agent-blocked"
+
+repositories:
+  host: github                  # where new application repositories are created
+  owner: ""                     # organisation or user that will own new repositories
+  visibility: private           # private | internal | public
+  naming: "{project-slug}"
+  default_branch: main
+  starter_templates: {}         # optional: stack -> starter template repository, e.g. { python: "org/python-starter" }
+  seed_from_control_repo:       # copied into every new application repository
+    - AGENTS.md
+    - agents/
+    - specs/
+    - .agent/config/
+
+merge:
+  strategy: squash              # squash | merge | rebase
+  delete_branch: true
+
+environments:
+  allowed: [dev]                # production is off by default; see agents/deployment-agent.md
+
+gate:
+  # Thresholds are mirrored into the generated agent files; the generated files are authoritative.
+  coverage_min_percent: 80
+  security_blocking_severities: [critical, high]
