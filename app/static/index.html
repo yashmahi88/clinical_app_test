@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinical Appointment Manager</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Clinical Appointment Manager</h1>
+    <p class="notice">Reception staff tool. Synthetic data only — this system does not provide
+      diagnosis, medical advice, prescriptions, or treatment recommendations.</p>
+  </header>
+
+  <main>
+    <section id="forms">
+      <div class="card">
+        <h2>Add doctor</h2>
+        <form id="doctor-form">
+          <label>Name <input name="name" required maxlength="120"></label>
+          <label>Specialization <input name="specialization" required maxlength="120"></label>
+          <button type="submit">Add doctor</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Register patient (synthetic)</h2>
+        <form id="patient-form">
+          <label>Name <input name="name" required maxlength="120"></label>
+          <label>Email <input name="email" type="email" required maxlength="200"></label>
+          <label>Phone <input name="phone" required pattern="[0-9+\-() ]{5,30}"></label>
+          <button type="submit">Register patient</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Set doctor availability</h2>
+        <form id="availability-form">
+          <label>Doctor <select name="doctor_id" required></select></label>
+          <label>Weekday
+            <select name="weekday" required>
+              <option value="0">Monday</option><option value="1">Tuesday</option>
+              <option value="2">Wednesday</option><option value="3">Thursday</option>
+              <option value="4">Friday</option><option value="5">Saturday</option>
+              <option value="6">Sunday</option>
+            </select>
+          </label>
+          <label>Start <input name="start_time" type="time" required></label>
+          <label>End <input name="end_time" type="time" required></label>
+          <button type="submit">Add availability</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Book appointment</h2>
+        <form id="appointment-form">
+          <label>Doctor <select name="doctor_id" required></select></label>
+          <label>Patient <select name="patient_id" required></select></label>
+          <label>Start <input name="start" type="datetime-local" required></label>
+          <label>End <input name="end" type="datetime-local" required></label>
+          <button type="submit">Book</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card" id="dashboard">
+      <h2>Appointments dashboard</h2>
+      <div id="filters">
+        <label>Date <input id="filter-day" type="date"></label>
+        <label>Status
+          <select id="filter-status">
+            <option value="">All</option>
+            <option value="booked">Booked</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <button id="apply-filters" type="button">Apply</button>
+        <button id="clear-filters" type="button">Clear</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Doctor</th><th>Patient</th><th>Start</th><th>End</th>
+              <th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="appointments-body"></tbody>
+      </table>
+    </section>
+
+    <div id="message" role="alert" hidden></div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

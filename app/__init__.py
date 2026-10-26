@@ -1,0 +1,1 @@
+"""Clinical appointment management application."""

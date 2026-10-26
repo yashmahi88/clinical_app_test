@@ -3,7 +3,7 @@ name: security-scanning-agent
 description: Runs secret, dependency, SAST, container and IaC scans on the exact commit and reports findings against the severity policy. Tools and commands are generated during repo setup.
 stage: "6 (Security Scanning Agent)"
 generation: hybrid
-status: partial
+status: ready
 upstream: test-agent
 downstream: code-scanning-agent
 ---
@@ -66,19 +66,45 @@ A category that does not apply is recorded as `n/a` with the reason (for example
 ## Project-specific sections
 
 <!-- BEGIN GENERATED:scanners -->
-> ⚠️ **PENDING GENERATION.** Secret, dependency, SAST, container and IaC tools that apply to this stack.
+| Category | Tool | Applies? |
+|---|---|---|
+| Secrets | gitleaks if installed; otherwise `git grep -nE '(secret|password|api[_-]?key|token|BEGIN .*PRIVATE KEY)'` over the diff | yes |
+| Dependencies (SCA) | pip-audit 2.10.1 (in `requirements-dev.txt`) | yes |
+| SAST | ruff (`B` bandit-derived rules via flake8-bandit subset in `pyproject.toml`) + manual review of `app/` for SQL string formatting, unescaped DOM writes, missing validation | yes |
+| Container | none — no Dockerfile in repository | n/a |
+| IaC | none — no Terraform/K8s/CI workflows in repository | n/a |
 <!-- END GENERATED:scanners -->
 
 <!-- BEGIN GENERATED:scan-commands -->
-> ⚠️ **PENDING GENERATION.** Verified commands, output formats and report paths.
+Run from repository root; write raw output under `.agent/runs/<TICKET-KEY>/security-output/`:
+
+| Category | Command | Notes |
+|---|---|---|
+| Secrets (tree) | `git grep -nEI '(secret|password|api[_-]?key|token|BEGIN [A-Z ]*PRIVATE KEY)' -- . ':(exclude).venv' ` | empty output = pass |
+| Secrets (gitleaks, if installed) | `gitleaks detect --source . --no-banner -r security-output/gitleaks.json` | preferred when available |
+| Dependencies | `.venv/bin/python -m pip_audit --cache-dir /tmp/pip-audit-cache` | audits installed env; use `--cache-dir` when `$HOME/.cache` is read-only. `-r requirements.txt` mode requires PyPI index access. JSON: add `-f json -o security-output/pip-audit.json` |
+| SAST (ruff) | `.venv/bin/python -m ruff check --output-format sarif -o security-output/ruff.sarif app tests` | also run plain `ruff check` for readable output |
+
+Record each tool's version (e.g. `.venv/bin/python -m pip_audit --version`) in the report.
 <!-- END GENERATED:scan-commands -->
 
 <!-- BEGIN GENERATED:severity-policy -->
-> ⚠️ **PENDING GENERATION.** Which severities block, and exceptions.
+- Blocking severities (new findings in the branch): **critical** and **high**
+  (`pipeline.yml` `security_blocking_severities: [critical, high]`).
+- Any confirmed secret committed anywhere in the branch is blocking regardless of
+  severity, and triggers immediate escalation per AGENTS.md rule 5.
+- Known-vulnerability findings map to the advisory's severity; when the advisory is
+  un-scored, treat exploitable-in-context dependency CVEs as high, otherwise medium.
+- Pre-existing findings (also present on the base branch) are reported but do not block.
 <!-- END GENERATED:severity-policy -->
 
 <!-- BEGIN GENERATED:suppression-policy -->
-> ⚠️ **PENDING GENERATION.** Where suppressions live, required justification, approval and expiry.
+- Suppressions live in `.agent/security-suppressions.yml` at repository root (create only
+  by human decision); each entry needs: rule/advisory ID, path, justification, approver,
+  and an expiry date.
+- An entry is valid only while unexpired and matching the exact rule + path. Never add
+  or edit suppressions to obtain a pass — expired or unapproved entries are ignored and
+  reported.
 <!-- END GENERATED:suppression-policy -->
 
 ## Done when

@@ -1,3 +1,11 @@
 # Per-run working state is not committed
 .agent/runs/*
 !.agent/runs/.gitkeep
+clinic.db
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.agent/runs/
+.coverage

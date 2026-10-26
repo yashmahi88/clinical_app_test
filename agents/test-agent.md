@@ -3,7 +3,7 @@ name: test-agent
 description: Runs the project's tests against the exact commit, verifies backend connectivity, and produces an evidence-based test report. Commands are generated during repo setup.
 stage: "6 (Run Tests Agent)"
 generation: hybrid
-status: partial
+status: ready
 upstream: coder
 downstream: security-scanning-agent
 ---
@@ -59,19 +59,46 @@ Execute tests and report results truthfully. The test agent runs and reports; it
 ## Project-specific sections
 
 <!-- BEGIN GENERATED:test-frameworks -->
-> ⚠️ **PENDING GENERATION.** Frameworks, test types, and where tests live.
+- pytest 9.1.1 with FastAPI `TestClient` (httpx 0.28.1); no browser/e2e framework —
+  API-level integration tests exercise the whole stack including persistence.
+- Tests live in `tests/` (`test_doctors_patients.py`, `test_availability.py`,
+  `test_appointments.py`); fixtures in `tests/conftest.py`.
+- pytest config in `pyproject.toml` (`testpaths = ["tests"]`, `addopts = "-q"`).
 <!-- END GENERATED:test-frameworks -->
 
 <!-- BEGIN GENERATED:test-commands -->
-> ⚠️ **PENDING GENERATION.** Verified commands: full suite, per type, single file.
+Verified from repository root with `.venv` installed (`pip install -r requirements-dev.txt`):
+
+| Scope | Command |
+|---|---|
+| Full suite | `.venv/bin/python -m pytest` |
+| With coverage | `.venv/bin/python -m pytest --cov=app --cov-report=term` |
+| Single file | `.venv/bin/python -m pytest tests/test_appointments.py` |
+| Single test | `.venv/bin/python -m pytest tests/test_appointments.py::test_overlapping_appointment_rejected` |
+| Verbose | `.venv/bin/python -m pytest -v` |
+
+Current baseline: 25 tests, all passing; coverage ≈95% of `app/` statements.
 <!-- END GENERATED:test-commands -->
 
 <!-- BEGIN GENERATED:coverage-policy -->
-> ⚠️ **PENDING GENERATION.** Coverage tool, thresholds, exclusions.
+- Tool: pytest-cov 7.1.0 (`--cov=app`), in `requirements-dev.txt`.
+- Threshold: ≥ 80% statement coverage overall (`pipeline.yml` `coverage_min_percent: 80`).
+  Current baseline ≈ 95%; new code must not drop overall below 80%, and every new
+  endpoint/rule ships with tests in the same diff.
+- Scope: `app/` package only; `tests/` excluded by measurement scope.
 <!-- END GENERATED:coverage-policy -->
 
 <!-- BEGIN GENERATED:test-data-and-env -->
-> ⚠️ **PENDING GENERATION.** Fixtures, test databases, mocks, required services, backend connectivity checks.
+- Test database: each test gets a fresh SQLite file via the `client` fixture, which
+  monkeypatches `CLINIC_DB_PATH` to `tmp_path/test.db` and builds a new app
+  (`create_app()` runs `init_db()`). No external services, Docker or network needed.
+- Fixtures: `client` (TestClient), `doctor`, `patient`, `availability`
+  (Monday 09:00–17:00), `appointment` (booked Monday 10:00–10:30). `MONDAY = "2026-11-02"`.
+- All test data is synthetic (`synthetic@example.test`, `555-0100`). Never use real
+  patient data. No secrets are required by any test.
+- Backend connectivity check: the only backend is SQLite. Verify by running
+  `.venv/bin/python -m pytest tests/test_appointments.py::test_persistence_across_restart`
+  — it recreates the app over the same DB file and confirms data survived.
 <!-- END GENERATED:test-data-and-env -->
 
 ## Done when
